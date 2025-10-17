@@ -4,7 +4,6 @@ graph.leftmostX = 250
 graph.upmostY = 50
 
 graph.makeBoundary = true
-graph.makeArrowsPos = true
 
 graph.arrowHeight = 10
 graph.arrowWidth = 5
@@ -87,28 +86,17 @@ graph.draw = function(self)
 		self.xAxisLineLength / 2 + self.leftmostX,
 		self.yAxisLineLength + self.upmostY
 	)
-	if self.makeArrowsPos then
-		love.graphics.line(
-			self.xAxisLineLength - self.arrowHeight + self.leftmostX,
-			self.yAxisLineLength / 2 - self.arrowWidth + self.upmostY,
+	love.graphics.line(
+		self.xAxisLineLength - self.arrowHeight + self.leftmostX,
+		self.yAxisLineLength / 2 - self.arrowWidth + self.upmostY,
 
-			self.xAxisLineLength + self.leftmostX,
-			self.yAxisLineLength / 2 + self.upmostY,
+		self.xAxisLineLength + self.leftmostX,
+		self.yAxisLineLength / 2 + self.upmostY,
 
-			self.xAxisLineLength - self.arrowHeight + self.leftmostX,
-			self.yAxisLineLength / 2 + self.arrowWidth + self.upmostY
-		)
-		love.graphics.line(
-			self.xAxisLineLength / 2 - self.arrowWidth + self.leftmostX,
-			self.arrowHeight + self.upmostY,
-
-			self.xAxisLineLength / 2 + self.leftmostX,
-			self.upmostY,
-
-			self.xAxisLineLength / 2 + self.arrowWidth + self.leftmostX,
-			self.arrowHeight + self.upmostY
-		)
-	end
+		self.xAxisLineLength - self.arrowHeight + self.leftmostX,
+		self.yAxisLineLength / 2 + self.arrowWidth + self.upmostY
+	)
+	love.graphics.line(self.xAxisLineLength / 2 - self.arrowWidth + self.leftmostX, self.arrowHeight + self.upmostY, self.xAxisLineLength / 2 + self.leftmostX, self.upmostY, self.xAxisLineLength / 2 + self.arrowWidth + self.leftmostX, self.arrowHeight + self.upmostY)
 	if self.makeBoundary then
 		love.graphics.rectangle("line", self.leftmostX, self.upmostY, self.xAxisLineLength, self.yAxisLineLength)
 	end
