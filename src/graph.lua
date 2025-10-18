@@ -51,14 +51,19 @@ graph.gridLineWidth = 1
 
 graph.showUncertainty = false -- will require another table of values
 graph.uncerLineWidth = 1
+graph.uncerWingWidth = 3
+graph.uncerColor = { 0, 0, 0 } -- set nil if you want them to be the same colot as point
 
 graph.showPoints = true
 graph.pointRad = 3
 graph.pointStyle = "fill"
 graph.pointLineWidth = 1
+
 graph.showPlotRough = true
-graph.showPlotSmooth = false
+graph.showPlotSmooth = false -- not implemented
+
 graph.plotLineWidth = 2
+
 graph.showCaptions = true
 graph.xCaptionMargin = 70
 graph.yCaptionMargin = 15
@@ -67,7 +72,13 @@ graph.data = {}
 graph.data.y = nil
 graph.data.x = {}
 
+graph.unc = {}
+graph.unc.y = nil
+graph.unc.x = {}
+
 graph.plot = {}
+
+graph.plotUnc = {}
 
 graph.makePlots = function(self)
 	for key, data in pairs(self.data.x) do
@@ -77,10 +88,29 @@ graph.makePlots = function(self)
 			table.insert(self.plot[key], self:toRealY(self.data.y[i]))
 		end
 	end
+	if self.showUncertainty then
+		for key, data in pairs(self.unc.x) do
+			self.plotUnc[key] = {}
+			for i, x in ipairs(data) do
+				table.insert(self.plotUnc[key], x * self.xStepDist)
+				table.insert(self.plotUnc[key], self.unc.y[i] * self.yStepDist)
+			end
+		end
+	end
 end
 
 graph.printPlots = function(self)
 	for key, plot in pairs(self.plot) do
+		print(key .. " " .. #plot)
+		for _, value in ipairs(plot) do
+			io.write(value .. " ")
+		end
+		print()
+	end
+end
+
+graph.printPlotsUnc = function(self)
+	for key, plot in pairs(self.plotUnc) do
 		print(key .. " " .. #plot)
 		for _, value in ipairs(plot) do
 			io.write(value .. " ")
@@ -108,8 +138,78 @@ graph.drawPlots = function(self)
 				love.graphics.circle(self.pointStyle, plot[i], plot[i + 1], self.pointRad)
 			end
 		end
+		if self.showUncertainty then
+			if self.uncerColor then
+				love.graphics.setColor(self.uncerColor)
+			end
+			love.graphics.setLineWidth(self.uncerLineWidth)
+			for i = 1, #plot, 2 do
+				-- y uncertainty
+				love.graphics.line(
+					plot[i],
+					plot[i + 1] - self.plotUnc[key][i + 1],
+					plot[i],
+					plot[i + 1] + self.plotUnc[key][i + 1]
+				)
+				-- x uncertainty
+				love.graphics.line(
+					plot[i] - self.plotUnc[key][i],
+					plot[i + 1],
+					plot[i] + self.plotUnc[key][i],
+					plot[i + 1]
+				)
+				-- y wings
+				love.graphics.line(
+					plot[i] - self.uncerWingWidth,
+					plot[i + 1] - self.plotUnc[key][i + 1],
+					plot[i] + self.uncerWingWidth,
+					plot[i + 1] - self.plotUnc[key][i + 1]
+				)
+				love.graphics.line(
+					plot[i] - self.uncerWingWidth,
+					plot[i + 1] + self.plotUnc[key][i + 1],
+					plot[i] + self.uncerWingWidth,
+					plot[i + 1] + self.plotUnc[key][i + 1]
+				)
+				-- x wings
+				love.graphics.line(
+					plot[i] - self.plotUnc[key][i],
+					plot[i + 1] - self.uncerWingWidth,
+					plot[i] - self.plotUnc[key][i],
+					plot[i + 1] + self.uncerWingWidth
+				)
+				love.graphics.line(
+					plot[i] + self.plotUnc[key][i],
+					plot[i + 1] - self.uncerWingWidth,
+					plot[i] + self.plotUnc[key][i],
+					plot[i + 1] + self.uncerWingWidth
+				)
+			end
+		end
 		j = j + 1
 	end
+end
+
+graph.loadDataUnc = function(self, filename)
+	assert(filename, "filename for loading uncertainty was not given!")
+	local dataFile = io.open(filename, "r")
+	if not dataFile then
+		error("Cannot acces the uncertainty file")
+	end
+	local i = 1
+	local currentKey = nil
+	for line in dataFile:lines("l") do
+		if i == 1 then
+			self.unc.y = split(line, " ")
+		elseif i % 2 == 0 then
+			currentKey = line
+		else
+			assert(currentKey, "No key was found for x while parsing data! File " .. filename .. " line " .. i)
+			self.unc.x[currentKey] = split(line, " ")
+		end
+		i = i + 1
+	end
+	dataFile:close()
 end
 
 graph.changeColor = function(self, key, r, g, b)
@@ -120,7 +220,7 @@ graph.loadData = function(self, filename)
 	assert(filename, "filename for loading dataPoints was not given!")
 	local dataFile = io.open(filename, "r")
 	if not dataFile then
-		error("Cannot acces the save file")
+		error("Cannot acces the data file")
 	end
 	local i = 1
 	local currentKey = nil

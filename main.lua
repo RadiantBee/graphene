@@ -7,9 +7,12 @@ function love.load()
 	Graph:loadData("inputDataLED")
 	-- graph settings:
 
-	--Graph.yLogScale = false
+	--Graph.yLogScale = true
 	--Graph.xLogScale = true
 	--Graph.xStepDelta = 10
+
+	Graph:loadDataUnc("uncLEDtest")
+	Graph.showUncertainty = true
 
 	Graph:print()
 	-- colors for individual plots
@@ -18,7 +21,8 @@ function love.load()
 	Graph:changeColor("Blue LED", 0, 0, 1)
 
 	Graph:makePlots()
-	Graph:printPlots()
+	--Graph:printPlots()
+	--Graph:printPlotsUnc()
 end
 
 function love.keypressed(key)
