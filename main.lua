@@ -4,6 +4,8 @@ function love.load()
 	love.graphics.setBackgroundColor(1, 1, 1)
 	love.graphics.setColor(0, 0, 0)
 	Graph:loadData("inputData")
+
+	Graph:print()
 end
 
 function love.keypressed(key)

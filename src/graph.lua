@@ -1,3 +1,11 @@
+local function split(s, delimiter)
+	local result = {}
+	for match in (s .. delimiter):gmatch("(.-)" .. delimiter) do
+		table.insert(result, match)
+	end
+	return result
+end
+
 local graph = {}
 
 graph.leftmostX = 250
@@ -36,8 +44,46 @@ graph.textNumMargin = 8
 
 graph.makeGrid = true
 
+graph.data = {}
+graph.data.y = nil
+graph.data.x = {}
+
 graph.loadData = function(self, filename)
-	assert(filename, "filename was not given!")
+	assert(filename, "filename for loading dataPoints was not given!")
+	local dataFile = io.open(filename, "r")
+	if not dataFile then
+		error("Cannot acces the save file")
+	end
+	local i = 1
+	local currentKey = nil
+	for line in dataFile:lines("l") do
+		if i == 1 then
+			print("main values: " .. line)
+			graph.data.y = split(line, " ")
+		elseif i % 2 == 0 then
+			currentKey = line
+		else
+			graph.data.x[currentKey] = split(line, " ")
+			print("data values: " .. line)
+		end
+		i = i + 1
+	end
+	dataFile:close()
+end
+
+graph.print = function(self)
+	io.write("(" .. #self.data.y .. ") y: ")
+	for _, value in ipairs(self.data.y) do
+		io.write(value .. " ")
+	end
+	print()
+	for key, arr in pairs(self.data.x) do
+		io.write("(" .. #self.data.x[key] .. ")[" .. key .. "] -> {")
+		for _, value in ipairs(arr) do
+			io.write(value .. " ")
+		end
+		print("}")
+	end
 end
 
 graph.toRealX = function(self, x)
@@ -96,7 +142,14 @@ graph.draw = function(self)
 		self.xAxisLineLength - self.arrowHeight + self.leftmostX,
 		self.yAxisLineLength / 2 + self.arrowWidth + self.upmostY
 	)
-	love.graphics.line(self.xAxisLineLength / 2 - self.arrowWidth + self.leftmostX, self.arrowHeight + self.upmostY, self.xAxisLineLength / 2 + self.leftmostX, self.upmostY, self.xAxisLineLength / 2 + self.arrowWidth + self.leftmostX, self.arrowHeight + self.upmostY)
+	love.graphics.line(
+		self.xAxisLineLength / 2 - self.arrowWidth + self.leftmostX,
+		self.arrowHeight + self.upmostY,
+		self.xAxisLineLength / 2 + self.leftmostX,
+		self.upmostY,
+		self.xAxisLineLength / 2 + self.arrowWidth + self.leftmostX,
+		self.arrowHeight + self.upmostY
+	)
 	if self.makeBoundary then
 		love.graphics.rectangle("line", self.leftmostX, self.upmostY, self.xAxisLineLength, self.yAxisLineLength)
 	end
