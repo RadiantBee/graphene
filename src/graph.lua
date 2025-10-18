@@ -18,6 +18,7 @@ graph.arrowWidth = 5
 
 graph.xAxisLineLength = 500
 graph.yAxisLineLength = 500
+graph.axisLineWidth = 1
 
 graph.xAxisCaption = "Ud[U]"
 graph.yAxisCaption = "Id[mA]"
@@ -27,7 +28,7 @@ graph.yAxisCaptionMargin = 50
 
 graph.textHeight = 5
 
-graph.xStepDelta = 10
+graph.xStepDelta = 1
 graph.yStepDelta = 10
 
 graph.stepLength = 4
@@ -43,12 +44,66 @@ graph.stepNumeration = true
 graph.textNumMargin = 8
 
 graph.makeGrid = true
+graph.gridLineWidth = 1
 
 graph.data = {}
 graph.data.y = nil
 graph.data.x = {}
 
-graph.plotData = function() end
+graph.showUncertainty = false -- will require another table of values
+graph.showPoints = true
+graph.pointRad = 1
+graph.pointStyle = "fill"
+graph.pointLineWidth = 1
+graph.showPlotRough = true
+graph.showPlotSmooth = false
+graph.plotLineWidth = 1
+graph.showCaptions = true
+graph.xCaptionMargin = 70
+graph.yCaptionMargin = 15
+
+graph.plot = {}
+
+graph.makePlots = function(self)
+	for key, data in pairs(self.data.x) do
+		self.plot[key] = {}
+		for i, x in ipairs(data) do
+			table.insert(self.plot[key], self:toRealX(x))
+			table.insert(self.plot[key], self:toRealY(self.data.y[i]))
+		end
+	end
+end
+
+graph.printPlots = function(self)
+	for key, plot in pairs(self.plot) do
+		print(key .. " " .. #plot)
+		for _, value in ipairs(plot) do
+			io.write(value .. " ")
+		end
+		print()
+	end
+end
+
+graph.drawPlots = function(self)
+	local j = 0
+	for key, plot in pairs(self.plot) do
+		love.graphics.setColor(self.data.x[key].color)
+		if self.showCaptions then
+			love.graphics.print(key, self.leftmostX - self.xCaptionMargin, self.upmostY + j * self.yCaptionMargin)
+		end
+		if self.showPlotRough then
+			love.graphics.setLineWidth(self.plotLineWidth)
+			love.graphics.line(plot)
+		end
+		if self.showPoints then
+			love.graphics.setLineWidth(self.pointLineWidth)
+			for i = 1, #plot, 2 do
+				love.graphics.circle(self.pointStyle, plot[i], plot[i + 1], self.pointRad)
+			end
+		end
+		j = j + 1
+	end
+end
 
 graph.changeColor = function(self, key, r, g, b)
 	self.data.x[key].color = { r, g, b }
@@ -64,20 +119,17 @@ graph.loadData = function(self, filename)
 	local currentKey = nil
 	for line in dataFile:lines("l") do
 		if i == 1 then
-			print("main values: " .. line)
-			graph.data.y = split(line, " ")
+			self.data.y = split(line, " ")
 		elseif i % 2 == 0 then
 			currentKey = line
 		else
 			assert(currentKey, "No key was found for x while parsing data! File " .. filename .. " line " .. i)
-			graph.data.x[currentKey] = split(line, " ")
-			graph.data.x[currentKey].color = { 0, 0, 0 }
-			print("data values: " .. line)
+			self.data.x[currentKey] = split(line, " ")
+			self.data.x[currentKey].color = { 0, 0, 0 }
 		end
 		i = i + 1
 	end
 	dataFile:close()
-	self:plotData()
 end
 
 graph.print = function(self)
@@ -96,21 +148,19 @@ graph.print = function(self)
 end
 
 graph.toRealX = function(self, x)
-	return self.leftmostX + self.xAxisLineLength / 2 + x * self.xStepDelta / 2
+	return self.leftmostX + self.xAxisLineLength / 2 + (x / self.xStepDelta) * self.xStepDist
 end
 graph.toRealY = function(self, y)
-	return self.upmostY + self.yAxisLineLength / 2 - y * self.yStepDelta / 2
+	return self.upmostY + self.yAxisLineLength / 2 - (y / self.yStepDelta) * self.yStepDist
 end
 graph.toRealPos = function(self, x, y)
 	return self.toRealX(x), self.toRealY(y)
 end
 
 graph.draw = function(self)
-	love.graphics.setColor(0, 0, 0)
-	love.graphics.setLineStyle("smooth")
-
 	if self.makeGrid then
 		love.graphics.setColor(0.8, 0.8, 0.8)
+		love.graphics.setLineWidth(self.gridLineWidth)
 		for i = 0, self.xStepAmount - 1, 1 do
 			love.graphics.line(
 				self.leftmostX + self.xStepDist * i,
@@ -127,8 +177,10 @@ graph.draw = function(self)
 				self.upmostY + self.yStepDist * (i + 1)
 			)
 		end
-		love.graphics.setColor(0, 0, 0)
 	end
+
+	love.graphics.setColor(0, 0, 0)
+	love.graphics.setLineWidth(self.axisLineWidth)
 	love.graphics.line(
 		self.leftmostX,
 		self.yAxisLineLength / 2 + self.upmostY,
