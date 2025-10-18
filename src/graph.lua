@@ -48,6 +48,12 @@ graph.data = {}
 graph.data.y = nil
 graph.data.x = {}
 
+graph.plotData = function() end
+
+graph.changeColor = function(self, key, r, g, b)
+	self.data.x[key].color = { r, g, b }
+end
+
 graph.loadData = function(self, filename)
 	assert(filename, "filename for loading dataPoints was not given!")
 	local dataFile = io.open(filename, "r")
@@ -63,12 +69,15 @@ graph.loadData = function(self, filename)
 		elseif i % 2 == 0 then
 			currentKey = line
 		else
+			assert(currentKey, "No key was found for x while parsing data! File " .. filename .. " line " .. i)
 			graph.data.x[currentKey] = split(line, " ")
+			graph.data.x[currentKey].color = { 0, 0, 0 }
 			print("data values: " .. line)
 		end
 		i = i + 1
 	end
 	dataFile:close()
+	self:plotData()
 end
 
 graph.print = function(self)
