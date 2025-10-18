@@ -7,29 +7,9 @@ function love.load()
 	Graph:loadData("inputDataLED")
 	-- graph settings:
 
-	Graph.axisLineWidth = 1
-
-	Graph.makeGrid = true
-	Graph.gridLineWidth = 1
-
-	Graph.makeBoundary = true
-
-	Graph.stepNumeration = true
-	Graph.showUncertainty = false -- requires adittional file with uncertainties
-
-	Graph.showPoints = true
-	Graph.pointRad = 3
-	Graph.pointStyle = "fill"
-	Graph.pointLineWidth = 1
-
-	Graph.showPlotRough = true
-	Graph.showPlotSmooth = false
-
-	Graph.plotLineWidth = 2
-
-	Graph.showCaptions = true
-	Graph.xCaptionMargin = 70
-	Graph.yCaptionMargin = 15
+	--Graph.yLogScale = false
+	--Graph.xLogScale = true
+	--Graph.xStepDelta = 10
 
 	Graph:print()
 	-- colors for individual plots

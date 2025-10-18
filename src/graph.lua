@@ -28,6 +28,9 @@ graph.yAxisCaptionMargin = 50
 
 graph.textHeight = 5
 
+graph.xLogScale = false
+graph.yLogScale = false
+
 graph.xStepDelta = 1
 graph.yStepDelta = 10
 
@@ -46,21 +49,23 @@ graph.textNumMargin = 8
 graph.makeGrid = true
 graph.gridLineWidth = 1
 
-graph.data = {}
-graph.data.y = nil
-graph.data.x = {}
-
 graph.showUncertainty = false -- will require another table of values
+graph.uncerLineWidth = 1
+
 graph.showPoints = true
-graph.pointRad = 1
+graph.pointRad = 3
 graph.pointStyle = "fill"
 graph.pointLineWidth = 1
 graph.showPlotRough = true
 graph.showPlotSmooth = false
-graph.plotLineWidth = 1
+graph.plotLineWidth = 2
 graph.showCaptions = true
 graph.xCaptionMargin = 70
 graph.yCaptionMargin = 15
+
+graph.data = {}
+graph.data.y = nil
+graph.data.x = {}
 
 graph.plot = {}
 
@@ -85,6 +90,8 @@ graph.printPlots = function(self)
 end
 
 graph.drawPlots = function(self)
+	--love.graphics.circle("fill", self:toRealX(0.05), self:toRealY(-15), 5)
+
 	local j = 0
 	for key, plot in pairs(self.plot) do
 		love.graphics.setColor(self.data.x[key].color)
@@ -148,10 +155,18 @@ graph.print = function(self)
 end
 
 graph.toRealX = function(self, x)
-	return self.leftmostX + self.xAxisLineLength / 2 + (x / self.xStepDelta) * self.xStepDist
+	if self.xLogScale then
+		return self.leftmostX + self.xAxisLineLength / 2 + math.log(x, self.xStepDelta) * self.xStepDist
+	else
+		return self.leftmostX + self.xAxisLineLength / 2 + (x / self.xStepDelta) * self.xStepDist
+	end
 end
 graph.toRealY = function(self, y)
-	return self.upmostY + self.yAxisLineLength / 2 - (y / self.yStepDelta) * self.yStepDist
+	if self.yLogScale then
+		return self.upmostY + self.yAxisLineLength / 2 - math.log(y, self.yStepDelta) * self.yStepDist
+	else
+		return self.upmostY + self.yAxisLineLength / 2 - (y / self.yStepDelta) * self.yStepDist
+	end
 end
 graph.toRealPos = function(self, x, y)
 	return self.toRealX(x), self.toRealY(y)
@@ -249,21 +264,44 @@ graph.draw = function(self)
 
 	if self.stepNumeration then
 		local tempVal
-		for i = 0, self.xStepAmount - 1, 1 do
-			tempVal = self.xStepDelta - self.xStepDelta * (self.xStepAmount / 2 - i + 1)
-			love.graphics.print(
-				tempVal ~= 0 and tempVal or "",
-				self.leftmostX + self.xStepDist * i - self.textNumMargin,
-				self.yAxisLineLength / 2 + self.upmostY - self.stepLength + self.textHeight
-			)
+		if self.xLogScale then
+			for i = 0, self.xStepAmount - 1, 1 do
+				tempVal = self.xStepDelta ^ (i - self.xStepDelta / 2)
+				love.graphics.print(
+					tempVal,
+					self.leftmostX + self.xStepDist * i - self.textNumMargin,
+					self.yAxisLineLength / 2 + self.upmostY - self.stepLength + self.textHeight
+				)
+			end
+		else
+			for i = 0, self.xStepAmount - 1, 1 do
+				tempVal = self.xStepDelta - self.xStepDelta * (self.xStepAmount / 2 - i + 1)
+				love.graphics.print(
+					tempVal ~= 0 and tempVal or "",
+					self.leftmostX + self.xStepDist * i - self.textNumMargin,
+					self.yAxisLineLength / 2 + self.upmostY - self.stepLength + self.textHeight
+				)
+			end
 		end
-		for i = 1, self.yStepAmount, 1 do
-			tempVal = self.yStepDelta * (self.yStepAmount / 2 - i)
-			love.graphics.print(
-				tempVal ~= 0 and tempVal or "",
-				self.xAxisLineLength / 2 + self.leftmostX - self.textNumMargin * 3,
-				self.upmostY + self.yStepDist * i - self.textHeight
-			)
+
+		if self.yLogScale then
+			for i = 1, self.yStepAmount, 1 do
+				tempVal = self.yStepDelta ^ (self.yStepAmount / 2 - i)
+				love.graphics.print(
+					tempVal,
+					self.xAxisLineLength / 2 + self.leftmostX - self.textNumMargin * 3,
+					self.upmostY + self.yStepDist * i - self.textHeight
+				)
+			end
+		else
+			for i = 1, self.yStepAmount, 1 do
+				tempVal = self.yStepDelta * (self.yStepAmount / 2 - i)
+				love.graphics.print(
+					tempVal ~= 0 and tempVal or "",
+					self.xAxisLineLength / 2 + self.leftmostX - self.textNumMargin * 3,
+					self.upmostY + self.yStepDist * i - self.textHeight
+				)
+			end
 		end
 	end
 end
