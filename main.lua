@@ -12,7 +12,7 @@ function love.load()
 	--Graph.xStepDelta = 10
 
 	Graph:loadDataUnc("uncLEDtest")
-	Graph.showUncertainty = true
+	Graph.showUncertainty = false
 
 	Graph:print()
 	-- colors for individual plots
