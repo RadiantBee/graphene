@@ -8,7 +8,7 @@ end
 
 local graph = {}
 
-graph.leftmostX = 250
+graph.leftmostX = 150
 graph.upmostY = 50
 
 graph.makeBoundary = true
@@ -20,8 +20,8 @@ graph.xAxisLineLength = 500
 graph.yAxisLineLength = 500
 graph.axisLineWidth = 1
 
-graph.xAxisCaption = "Ud[U]"
-graph.yAxisCaption = "Id[mA]"
+graph.xAxisCaption = "Is[mA]"
+graph.yAxisCaption = "Uy[mV]"
 
 graph.xAxisCaptionMargin = 38
 graph.yAxisCaptionMargin = 50
@@ -32,12 +32,12 @@ graph.xLogScale = false
 graph.yLogScale = false
 
 graph.xStepDelta = 1
-graph.yStepDelta = 10
+graph.yStepDelta = 0.5
 
 graph.stepLength = 4
 
-graph.xStepAmount = 10
-graph.yStepAmount = 10
+graph.xStepAmount = 14
+graph.yStepAmount = 14
 
 graph.xStepDist = graph.xAxisLineLength / graph.xStepAmount
 graph.yStepDist = graph.yAxisLineLength / graph.yStepAmount
@@ -49,12 +49,12 @@ graph.textNumMargin = 8
 graph.makeGrid = true
 graph.gridLineWidth = 1
 
-graph.showUncertainty = false -- will require another table of values
+graph.showUncertainty = true -- will require another table of values
 graph.uncerLineWidth = 1
 graph.uncerWingWidth = 3
-graph.uncerColor = { 0, 0, 0 } -- set nil if you want them to be the same colot as point
+graph.uncerColor = false -- { 0, 0, 0 } -- set nil if you want them to be the same colot as point
 
-graph.showPoints = true
+graph.showPoints = true --true
 graph.pointRad = 3
 graph.pointStyle = "fill"
 graph.pointLineWidth = 1
@@ -62,10 +62,12 @@ graph.pointLineWidth = 1
 graph.showPlotRough = true
 graph.showPlotSmooth = false -- not implemented
 
-graph.plotLineWidth = 2
+graph.plotLineWidth = 1
+
+graph.plotInvertXY = true
 
 graph.showCaptions = true
-graph.xCaptionMargin = 70
+graph.xCaptionMargin = 60
 graph.yCaptionMargin = 15
 
 graph.data = {}
@@ -81,19 +83,38 @@ graph.plot = {}
 graph.plotUnc = {}
 
 graph.makePlots = function(self)
-	for key, data in pairs(self.data.x) do
-		self.plot[key] = {}
-		for i, x in ipairs(data) do
-			table.insert(self.plot[key], self:toRealX(x))
-			table.insert(self.plot[key], self:toRealY(self.data.y[i]))
-		end
-	end
-	if self.showUncertainty then
-		for key, data in pairs(self.unc.x) do
-			self.plotUnc[key] = {}
+	if self.plotInvertXY then
+		for key, data in pairs(self.data.x) do
+			self.plot[key] = {}
 			for i, x in ipairs(data) do
-				table.insert(self.plotUnc[key], x * self.xStepDist)
-				table.insert(self.plotUnc[key], self.unc.y[i] * self.yStepDist)
+				table.insert(self.plot[key], self:toRealX(self.data.y[i]))
+				table.insert(self.plot[key], self:toRealY(x))
+			end
+		end
+		if self.showUncertainty then
+			for key, data in pairs(self.unc.x) do
+				self.plotUnc[key] = {}
+				for i, x in ipairs(data) do
+					table.insert(self.plotUnc[key], math.abs(self.unc.y[i]) * self.xStepDist)
+					table.insert(self.plotUnc[key], math.abs(x) * self.yStepDist)
+				end
+			end
+		end
+	else
+		for key, data in pairs(self.data.x) do
+			self.plot[key] = {}
+			for i, x in ipairs(data) do
+				table.insert(self.plot[key], self:toRealX(x))
+				table.insert(self.plot[key], self:toRealY(self.data.y[i]))
+			end
+		end
+		if self.showUncertainty then
+			for key, data in pairs(self.unc.x) do
+				self.plotUnc[key] = {}
+				for i, x in ipairs(data) do
+					table.insert(self.plotUnc[key], math.abs(x) * self.xStepDist)
+					table.insert(self.plotUnc[key], math.abs(self.unc.y[i]) * self.yStepDist)
+				end
 			end
 		end
 	end
