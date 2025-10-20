@@ -52,7 +52,7 @@ graph.gridLineWidth = 1
 graph.showUncertainty = true -- will require another table of values
 graph.uncerLineWidth = 1
 graph.uncerWingWidth = 3
-graph.uncerColor = false -- { 0, 0, 0 } -- set nil if you want them to be the same colot as point
+graph.uncerColor = nil -- { 0, 0, 0 } -- set nil if you want them to be the same colot as point
 
 graph.showPoints = true --true
 graph.pointRad = 3
@@ -95,8 +95,8 @@ graph.makePlots = function(self)
 			for key, data in pairs(self.unc.x) do
 				self.plotUnc[key] = {}
 				for i, x in ipairs(data) do
-					table.insert(self.plotUnc[key], math.abs(self.unc.y[i]) * self.xStepDist)
-					table.insert(self.plotUnc[key], math.abs(x) * self.yStepDist)
+					table.insert(self.plotUnc[key], math.abs(self.unc.y[i]) * self.xStepDist / self.xStepDelta)
+					table.insert(self.plotUnc[key], math.abs(x) * self.yStepDist / self.yStepDelta)
 				end
 			end
 		end
@@ -112,8 +112,8 @@ graph.makePlots = function(self)
 			for key, data in pairs(self.unc.x) do
 				self.plotUnc[key] = {}
 				for i, x in ipairs(data) do
-					table.insert(self.plotUnc[key], math.abs(x) * self.xStepDist)
-					table.insert(self.plotUnc[key], math.abs(self.unc.y[i]) * self.yStepDist)
+					table.insert(self.plotUnc[key], math.abs(x) * self.xStepDist / self.xStepDelta)
+					table.insert(self.plotUnc[key], math.abs(self.unc.y[i]) * self.yStepDist / self.yStepDelta)
 				end
 			end
 		end
