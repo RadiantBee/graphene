@@ -11,7 +11,7 @@ local graph = {}
 graph.leftmostX = 150
 graph.upmostY = 50
 
-graph.makeBoundary = true
+graph.makeBoundary = false
 
 graph.arrowHeight = 10
 graph.arrowWidth = 5
@@ -20,8 +20,15 @@ graph.xAxisLineLength = 500
 graph.yAxisLineLength = 500
 graph.axisLineWidth = 1
 
-graph.yAxisCaption = "Ic[mA]"
-graph.xAxisCaption = "Uce[V]"
+graph.yAxisCaption = "Id[mA]"
+graph.xAxisCaption = "Ud[V]"
+
+graph.yNegAxisCaption = nil --"Id[mA]"
+graph.xNegAxisCaption = nil --"Ud[V]"
+
+graph.xStepOffsetLeft = 0
+graph.xStepOffsetRight = 0 --1
+graph.yStepOffsetLow = 0 -- used to add the lowest y step (in place of yNegArrow)
 
 graph.xAxisCaptionMargin = 38
 graph.yAxisCaptionMargin = 50
@@ -31,13 +38,13 @@ graph.textHeight = 5
 graph.xLogScale = false
 graph.yLogScale = false
 
-graph.xStepDelta = 2
-graph.yStepDelta = 2
+graph.xStepDelta = 0.5
+graph.yStepDelta = 10
 
 graph.stepLength = 4
 
 graph.xStepAmount = 14
-graph.yStepAmount = 14
+graph.yStepAmount = 10
 
 graph.xStepDist = graph.xAxisLineLength / graph.xStepAmount
 graph.yStepDist = graph.yAxisLineLength / graph.yStepAmount
@@ -64,7 +71,7 @@ graph.showPlotSmooth = false -- not implemented
 
 graph.plotLineWidth = 2
 
-graph.plotInvertXY = true
+graph.plotInvertXY = false
 
 graph.multX = 1
 graph.multY = 1
@@ -72,6 +79,7 @@ graph.multY = 1
 graph.showCaptions = true
 graph.xCaptionMargin = -graph.xAxisLineLength - 10
 graph.yCaptionMargin = 15
+graph.yCaptionPos = graph.upmostY
 
 graph.data = {}
 graph.data.y = nil
@@ -156,7 +164,7 @@ graph.drawPlots = function(self)
 	for key, plot in pairs(self.plot) do
 		love.graphics.setColor(self.data.x[key].color)
 		if self.showCaptions then
-			love.graphics.print(key, self.leftmostX - self.xCaptionMargin, self.upmostY + j * self.yCaptionMargin)
+			love.graphics.print(key, self.leftmostX - self.xCaptionMargin, self.yCaptionPos + j * self.yCaptionMargin)
 		end
 		if self.showPlotRough then
 			love.graphics.setLineWidth(self.plotLineWidth)
@@ -359,7 +367,38 @@ graph.draw = function(self)
 	if self.makeBoundary then
 		love.graphics.rectangle("line", self.leftmostX, self.upmostY, self.xAxisLineLength, self.yAxisLineLength)
 	end
+	if self.xNegAxisCaption then
+		love.graphics.line(
+			self.arrowHeight + self.leftmostX,
+			self.yAxisLineLength / 2 - self.arrowWidth + self.upmostY,
 
+			self.leftmostX,
+			self.yAxisLineLength / 2 + self.upmostY,
+
+			self.arrowHeight + self.leftmostX,
+			self.yAxisLineLength / 2 + self.arrowWidth + self.upmostY
+		)
+		love.graphics.print(
+			self.xNegAxisCaption,
+			self.leftmostX,
+			self.yAxisLineLength / 2 + self.upmostY + self.textHeight
+		)
+	end
+	if self.yNegAxisCaption then
+		love.graphics.line(
+			self.xAxisLineLength / 2 - self.arrowWidth + self.leftmostX,
+			self.yAxisLineLength - self.arrowHeight + self.upmostY,
+			self.xAxisLineLength / 2 + self.leftmostX,
+			self.yAxisLineLength + self.upmostY,
+			self.xAxisLineLength / 2 + self.arrowWidth + self.leftmostX,
+			self.yAxisLineLength - self.arrowHeight + self.upmostY
+		)
+		love.graphics.print(
+			self.yNegAxisCaption,
+			self.xAxisLineLength / 2 + self.leftmostX - self.yAxisCaptionMargin,
+			self.yAxisLineLength + self.upmostY - self.textHeight * 3
+		)
+	end
 	if self.xAxisCaption then
 		love.graphics.print(
 			self.xAxisCaption,
@@ -375,7 +414,7 @@ graph.draw = function(self)
 		)
 	end
 
-	for i = 0, self.xStepAmount - 1, 1 do
+	for i = 0 + self.xStepOffsetLeft, self.xStepAmount - 1, 1 do
 		love.graphics.line(
 			self.leftmostX + self.xStepDist * i,
 			self.yAxisLineLength / 2 + self.upmostY - self.stepLength,
@@ -383,7 +422,7 @@ graph.draw = function(self)
 			self.yAxisLineLength / 2 + self.upmostY + self.stepLength
 		)
 	end
-	for i = 0, self.yStepAmount - 1, 1 do
+	for i = 0, self.yStepAmount - 1 - self.yStepOffsetLow, 1 do
 		love.graphics.line(
 			self.xAxisLineLength / 2 + self.leftmostX - self.stepLength,
 			self.upmostY + self.yStepDist * (i + 1),
@@ -395,7 +434,7 @@ graph.draw = function(self)
 	if self.stepNumeration then
 		local tempVal
 		if self.xLogScale then
-			for i = 0, self.xStepAmount - 1, 1 do
+			for i = 1, self.xStepAmount - 2, 1 do
 				tempVal = self.xStepDelta ^ (i - self.xStepDelta / 2)
 				love.graphics.print(
 					tempVal,
@@ -404,7 +443,7 @@ graph.draw = function(self)
 				)
 			end
 		else
-			for i = 0, self.xStepAmount - 1, 1 do
+			for i = 0 + self.xStepOffsetLeft, self.xStepAmount - 1 - self.xStepOffsetRight, 1 do
 				tempVal = self.xStepDelta - self.xStepDelta * (self.xStepAmount / 2 - i + 1)
 				love.graphics.print(
 					tempVal ~= 0 and tempVal or "",
@@ -415,7 +454,7 @@ graph.draw = function(self)
 		end
 
 		if self.yLogScale then
-			for i = 1, self.yStepAmount, 1 do
+			for i = 1, self.yStepAmount - self.yStepOffsetLow, 1 do
 				tempVal = self.yStepDelta ^ (self.yStepAmount / 2 - i)
 				love.graphics.print(
 					tempVal,
@@ -424,7 +463,7 @@ graph.draw = function(self)
 				)
 			end
 		else
-			for i = 1, self.yStepAmount, 1 do
+			for i = 1, self.yStepAmount - self.yStepOffsetLow, 1 do
 				tempVal = self.yStepDelta * (self.yStepAmount / 2 - i)
 				love.graphics.print(
 					tempVal ~= 0 and tempVal or "",
