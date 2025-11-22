@@ -20,15 +20,15 @@ graph.xAxisLineLength = 500
 graph.yAxisLineLength = 500
 graph.axisLineWidth = 1
 
-graph.yAxisCaption = "Id[mA]"
-graph.xAxisCaption = "Ud[V]"
+graph.yAxisCaption = "n[Pa*S]"
+graph.xAxisCaption = "T[C]"
 
-graph.yNegAxisCaption = nil --"Id[mA]"
+graph.yNegAxisCaption = "ln(n)"
 graph.xNegAxisCaption = nil --"Ud[V]"
 
 graph.xStepOffsetLeft = 0
 graph.xStepOffsetRight = 0 --1
-graph.yStepOffsetLow = 0 -- used to add the lowest y step (in place of yNegArrow)
+graph.yStepOffsetLow = 1 -- used to add the lowest y step (in place of yNegArrow)
 
 graph.xAxisCaptionMargin = 38
 graph.yAxisCaptionMargin = 50
@@ -38,13 +38,17 @@ graph.textHeight = 5
 graph.xLogScale = false
 graph.yLogScale = false
 
-graph.xStepDelta = 0.5
-graph.yStepDelta = 10
+graph.xStepDelta = 5
+graph.yStepDelta = 0.1
+
+-- Will not work with log scale (numeration is not implemented):
+graph.xAxOff = 0.3
+graph.yAxOff = 25 -- BUG: somethig may be wrong at 0th step
 
 graph.stepLength = 4
 
-graph.xStepAmount = 14
-graph.yStepAmount = 10
+graph.xStepAmount = 2 * 6
+graph.yStepAmount = 2 * 7
 
 graph.xStepDist = graph.xAxisLineLength / graph.xStepAmount
 graph.yStepDist = graph.yAxisLineLength / graph.yStepAmount
@@ -56,22 +60,22 @@ graph.textNumMargin = 8
 graph.makeGrid = true
 graph.gridLineWidth = 1
 
-graph.showUncertainty = false -- will require another table of values
+graph.showUncertainty = true -- will require another table of values
 graph.uncerLineWidth = 1
 graph.uncerWingWidth = 3
 graph.uncerColor = nil -- { 0, 0, 0 } -- set nil if you want them to be the same colot as point
 
-graph.showPoints = true --true
+graph.showPoints = true
 graph.pointRad = 3
 graph.pointStyle = "fill"
 graph.pointLineWidth = 1
 
-graph.showPlotRough = true
+graph.showPlotRough = false
 graph.showPlotSmooth = false -- not implemented
 
 graph.plotLineWidth = 2
 
-graph.plotInvertXY = false
+graph.plotInvertXY = true
 
 graph.multX = 1
 graph.multY = 1
@@ -136,7 +140,21 @@ graph.makePlots = function(self)
 		end
 	end
 end
-
+--[[
+graph.makePlotLin = function(self, k, b, name, r, g, b)
+	self.plot[name] = {}
+	self.data.x[name] = {}
+	self.data.x[name].color = { r, g, b }
+	--self.plot[name].color = { r, g, b }
+	if self.plotInvertXY then
+		table.insert(self.plot[name], self:toRealX(y))
+		table.insert(self.plot[name], self:toRealY((y - b) / k))
+	else
+		table.insert(self.plot[name], self:toRealX((y - b) / k))
+		table.insert(self.plot[name], self:toRealY(y))
+	end
+end
+--]]
 graph.printPlots = function(self)
 	for key, plot in pairs(self.plot) do
 		print(key .. " " .. #plot)
@@ -294,16 +312,16 @@ end
 
 graph.toRealX = function(self, x)
 	if self.xLogScale then
-		return self.leftmostX + self.xAxisLineLength / 2 + math.log(x, self.xStepDelta) * self.xStepDist
+		return self.leftmostX + self.xAxisLineLength / 2 + math.log(x - self.yAxOff, self.xStepDelta) * self.xStepDist
 	else
-		return self.leftmostX + self.xAxisLineLength / 2 + (x / self.xStepDelta) * self.xStepDist
+		return self.leftmostX + self.xAxisLineLength / 2 + ((x - self.yAxOff) / self.xStepDelta) * self.xStepDist
 	end
 end
 graph.toRealY = function(self, y)
 	if self.yLogScale then
-		return self.upmostY + self.yAxisLineLength / 2 - math.log(y, self.yStepDelta) * self.yStepDist
+		return self.upmostY + self.yAxisLineLength / 2 - math.log(y + self.xAxOff, self.yStepDelta) * self.yStepDist
 	else
-		return self.upmostY + self.yAxisLineLength / 2 - (y / self.yStepDelta) * self.yStepDist
+		return self.upmostY + self.yAxisLineLength / 2 - ((y - self.xAxOff) / self.yStepDelta) * self.yStepDist
 	end
 end
 graph.toRealPos = function(self, x, y)
@@ -444,7 +462,7 @@ graph.draw = function(self)
 			end
 		else
 			for i = 0 + self.xStepOffsetLeft, self.xStepAmount - 1 - self.xStepOffsetRight, 1 do
-				tempVal = self.xStepDelta - self.xStepDelta * (self.xStepAmount / 2 - i + 1)
+				tempVal = self.xStepDelta - self.xStepDelta * (self.xStepAmount / 2 - i + 1) + self.yAxOff
 				love.graphics.print(
 					tempVal ~= 0 and tempVal or "",
 					self.leftmostX + self.xStepDist * i - self.textNumMargin,
@@ -464,7 +482,7 @@ graph.draw = function(self)
 			end
 		else
 			for i = 1, self.yStepAmount - self.yStepOffsetLow, 1 do
-				tempVal = self.yStepDelta * (self.yStepAmount / 2 - i)
+				tempVal = self.yStepDelta * (self.yStepAmount / 2 - i) + self.xAxOff
 				love.graphics.print(
 					tempVal ~= 0 and tempVal or "",
 					self.xAxisLineLength / 2 + self.leftmostX - self.textNumMargin * 3,
